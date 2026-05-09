@@ -29,8 +29,11 @@ if [[ ! -f "${ENV_FILE}" ]]; then
 fi
 
 if ! command -v railway >/dev/null 2>&1; then
-  echo "❌ Встанови Railway CLI: https://docs.railway.com/develop/cli"
-  echo "   (напр.: brew install railway)"
+  echo "❌ Railway CLI не знайдено. Встановлення (обери один спосіб):"
+  echo "   • bash <(curl -fsSL railway.com/install.sh)"
+  echo "   • або: npm i -g @railway/cli"
+  echo "   • або (як є Homebrew): brew install railway"
+  echo "   Документація: https://docs.railway.com/develop/cli"
   exit 1
 fi
 
