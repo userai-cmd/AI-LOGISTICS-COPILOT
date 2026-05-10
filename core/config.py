@@ -1,5 +1,28 @@
-from pydantic import Field
+from urllib.parse import urlparse
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def infer_postgres_ssl_from_url(database_url: str) -> bool:
+    """Евристика Railway: публічний TCP-проксі → TLS; приватний *.railway.internal → без TLS."""
+    u = database_url.strip()
+    if u.startswith("postgres://"):
+        u = "postgresql://" + u[len("postgres://") :]
+    try:
+        parsed = urlparse(u)
+    except ValueError:
+        return False
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False
+    if "proxy.rlwy.net" in host:
+        return True
+    if "railway.internal" in host or host.endswith(".internal"):
+        return False
+    if host in ("localhost", "127.0.0.1", "::1"):
+        return False
+    return False
 
 
 class Settings(BaseSettings):
@@ -26,10 +49,18 @@ class Settings(BaseSettings):
     )
 
     database_url: str = Field(..., validation_alias="DATABASE_URL")
-    database_ssl: bool = Field(
-        default=False,
+    # Якщо не задавати DATABASE_SSL у Railway — автоматично: proxy.rlwy.net=true, railway.internal=false
+    database_ssl: bool | None = Field(
+        default=None,
         validation_alias="DATABASE_SSL",
     )
+
+    @field_validator("database_ssl", mode="before")
+    @classmethod
+    def _empty_database_ssl_as_unset(cls, v: object) -> object:
+        if v == "":
+            return None
+        return v
 
     webhook_base_url: str = Field(
         default="http://127.0.0.1:8000",
@@ -53,6 +84,11 @@ class Settings(BaseSettings):
     def telegram_webhook_url(self) -> str:
         base = self.webhook_base_url.rstrip("/")
         return f"{base}/api/webhooks/telegram"
+
+    def postgres_should_use_ssl(self) -> bool:
+        if self.database_ssl is not None:
+            return self.database_ssl
+        return infer_postgres_ssl_from_url(self.database_url)
 
     @property
     def effective_manager_chat_id(self) -> int:

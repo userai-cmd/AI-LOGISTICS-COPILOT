@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 import asyncpg
 
 from core.config import Settings
+
+log = logging.getLogger(__name__)
 
 
 def _normalize_dsn(url: str) -> str:
@@ -17,8 +20,14 @@ def _normalize_dsn(url: str) -> str:
 
 async def create_pool(settings: Settings) -> asyncpg.Pool:
     kwargs: dict[str, Any] = {"min_size": 1, "max_size": 10}
-    # Зовнішній Railway TCP-проксі (*.proxy.rlwy.net) → зазвичай TLS; приватний Reference-URL → часто false
-    if settings.database_ssl:
+    use_ssl = settings.postgres_should_use_ssl()
+    cfg = settings.database_ssl
+    log.info(
+        "Postgres connect ssl=%s (DATABASE_SSL env=%s)",
+        use_ssl,
+        "unset→auto" if cfg is None else cfg,
+    )
+    if use_ssl:
         kwargs["ssl"] = True
 
     return await asyncpg.create_pool(
