@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import ssl
 from typing import Any
 from urllib.parse import urlparse
 
@@ -24,6 +25,19 @@ def _dsn_host_port(dsn_normalized: str) -> tuple[str | None, int]:
     return parsed.hostname, int(parsed.port or 5432)
 
 
+def _ssl_for_asyncpg(use_ssl: bool, host: str | None) -> bool | ssl.SSLContext:
+    """Railway *.proxy.rlwy.net часто термінує TLS інакше; ssl=True інколи дає збій атрибута handshake."""
+    if not use_ssl:
+        return False
+    h = (host or "").lower()
+    if "proxy.rlwy.net" in h:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        return ctx
+    return True
+
+
 async def create_pool(settings: Settings) -> asyncpg.Pool:
     kwargs: dict[str, Any] = {"min_size": 1, "max_size": 10}
     use_ssl = settings.postgres_should_use_ssl()
@@ -37,8 +51,9 @@ async def create_pool(settings: Settings) -> asyncpg.Pool:
         use_ssl,
         "unset→auto" if cfg is None else cfg,
     )
-    if use_ssl:
-        kwargs["ssl"] = True
+    ssl_opt = _ssl_for_asyncpg(use_ssl, host)
+    if ssl_opt is not False:
+        kwargs["ssl"] = ssl_opt
 
     try:
         return await asyncpg.create_pool(dsn, **kwargs)
