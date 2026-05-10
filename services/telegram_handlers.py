@@ -69,7 +69,17 @@ async def on_text_dispatch(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     chat = update.effective_chat
     chat_id = chat.id
 
-    if chat_id == settings.operator_chat_id:
+    # Якщо OPERATOR_CHAT_ID = ваш user id, у приваті з того ж акаунту без reply раніше
+    # все йшло в handle_operator_chat_text і не потрапляло в БД/клієнтський пайплайн.
+    operator_inbox = chat_id == settings.operator_chat_id
+    if operator_inbox and chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
+        await handle_operator_chat_text(update, context)
+        return
+    if (
+        operator_inbox
+        and chat.type == ChatType.PRIVATE
+        and update.message.reply_to_message is not None
+    ):
         await handle_operator_chat_text(update, context)
         return
 
