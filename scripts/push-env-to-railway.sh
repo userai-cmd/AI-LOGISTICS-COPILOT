@@ -7,8 +7,9 @@
 # У корені репозиторію:
 #   railway link     # обери Project + Service (FastAPI-сервіс, не Postgres)
 #
-# DATABASE_URL краще підключити в UI як Reference із сервісу Postgres — скрипт за
-# замовчуванням НЕ надсилає DATABASE_URL із файлу (див. нижче).
+# DATABASE_URL: для продай краще Reference → Postgres у Railway UI. Зовнішній проксі:
+# хост *.proxy.rlwy.net + порт з Public Networking; у .env для такого випадку зазвичай DATABASE_SSL=true.
+# Скрипт за замовчуванням НЕ надсилає DATABASE_URL із файлу (див. нижче).
 #
 # Використання:
 #   ./scripts/push-env-to-railway.sh              # бере ./.env

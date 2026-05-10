@@ -17,7 +17,7 @@ def _normalize_dsn(url: str) -> str:
 
 async def create_pool(settings: Settings) -> asyncpg.Pool:
     kwargs: dict[str, Any] = {"min_size": 1, "max_size": 10}
-    # Railway public Postgres hostnames часто потребують TLS; локально лишайте DATABASE_SSL=false
+    # Зовнішній Railway TCP-проксі (*.proxy.rlwy.net) → зазвичай TLS; приватний Reference-URL → часто false
     if settings.database_ssl:
         kwargs["ssl"] = True
 
