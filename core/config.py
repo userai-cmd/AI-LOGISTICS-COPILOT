@@ -10,7 +10,10 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: str = Field(..., validation_alias="ANTHROPIC_API_KEY")
-    model_name: str = Field(default="claude-3-5-sonnet-latest", validation_alias="MODEL_NAME")
+    model_name: str = Field(
+        default="claude-3-5-sonnet-20241022",
+        validation_alias="MODEL_NAME",
+    )
 
     telegram_bot_token: str = Field(..., validation_alias="TELEGRAM_BOT_TOKEN")
     operator_chat_id: int = Field(..., validation_alias="OPERATOR_CHAT_ID")
