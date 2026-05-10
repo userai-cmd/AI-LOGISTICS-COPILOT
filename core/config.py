@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     operator_chat_id: int = Field(..., validation_alias="OPERATOR_CHAT_ID")
     manager_chat_id: int | None = Field(default=None, validation_alias="MANAGER_CHAT_ID")
 
+    # Bearer for /api/operator/* and the browser workspace at /operator/
+    operator_workspace_token: str | None = Field(
+        default=None,
+        validation_alias="OPERATOR_WORKSPACE_TOKEN",
+    )
+
     database_url: str = Field(..., validation_alias="DATABASE_URL")
     database_ssl: bool = Field(
         default=False,

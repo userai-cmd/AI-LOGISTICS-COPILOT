@@ -137,6 +137,37 @@ class ConversationRepository:
                 telegram_id,
             )
 
+    async def list_recent(self, limit: int = 100) -> list[dict[str, Any]]:
+        lim = max(1, min(int(limit), 500))
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT telegram_id, history, pending_draft, last_updated
+                FROM conversations
+                ORDER BY last_updated DESC
+                LIMIT $1
+                """,
+                lim,
+            )
+        out: list[dict[str, Any]] = []
+        for row in rows:
+            hist = _history_from_db(row["history"])
+            preview = ""
+            if hist:
+                last = hist[-1]
+                c = last.get("content") if isinstance(last, dict) else None
+                preview = (str(c) if c is not None else "")[:280]
+            out.append(
+                {
+                    "telegram_id": row["telegram_id"],
+                    "pending_draft": row["pending_draft"],
+                    "last_updated": row["last_updated"],
+                    "history": hist,
+                    "last_message_preview": preview,
+                },
+            )
+        return out
+
 
 class ClaimsRepository:
     def __init__(self, pool: asyncpg.Pool) -> None:

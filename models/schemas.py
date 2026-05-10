@@ -28,3 +28,21 @@ class ConversationState(BaseModel):
     telegram_id: int
     history: list[dict[str, Any]] = Field(default_factory=list)
     pending_draft: str | None = None
+
+
+class OperatorConversationSummary(BaseModel):
+    telegram_id: int
+    last_updated: str | None = None
+    has_pending_draft: bool = False
+    last_message_preview: str = ""
+
+
+class OperatorConversationDetail(BaseModel):
+    telegram_id: int
+    last_updated: str | None = None
+    pending_draft: str | None = None
+    history: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class OperatorReplyBody(BaseModel):
+    text: str = Field(..., min_length=1, max_length=4096)

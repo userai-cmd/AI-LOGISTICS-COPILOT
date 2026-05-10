@@ -4,9 +4,11 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from telegram import Update
 from telegram.ext import Application
 
+from api.operator import router as operator_router
 from api.webhooks import router as telegram_router
 from core.config import Settings, get_settings
 from core.logging_config import configure_logging
@@ -68,6 +70,7 @@ async def lifespan(app: FastAPI):
             await application.bot.set_webhook(url=settings.telegram_webhook_url, **kwargs)
 
         app.state.ptb = application
+        app.state.conversation_repo = conversation_repo
 
         yield
     finally:
@@ -87,6 +90,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AI-LOGISTICS COPILOT", lifespan=lifespan)
 app.include_router(telegram_router, prefix="/api/webhooks")
+app.include_router(operator_router, prefix="/api")
+app.mount(
+    "/operator",
+    StaticFiles(directory="static/operator", html=True),
+    name="operator_workspace",
+)
 
 
 @app.get("/")
@@ -96,6 +105,7 @@ async def root() -> dict[str, str]:
         "status": "ok",
         "health": "/health",
         "telegram_webhook": "/api/webhooks/telegram",
+        "operator_workspace": "/operator/",
     }
 
 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Операторська панель — AI Logistics Copilot</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>Операторська панель</h1>
+      <p class="sub">Діалоги з Telegram-клієнтів · чернетки AI · відправка в чат клієнта</p>
+    </header>
+
+    <section id="gate" class="panel gate">
+      <label for="token">Токен доступу (OPERATOR_WORKSPACE_TOKEN)</label>
+      <div class="row">
+        <input id="token" type="password" autocomplete="off" placeholder="Bearer-токен з Railway / .env" />
+        <button type="button" id="saveToken">Зберегти</button>
+      </div>
+      <p id="gateMsg" class="msg" hidden></p>
+    </section>
+
+    <div id="app" class="layout" hidden>
+      <aside class="side">
+        <div class="toolbar">
+          <button type="button" id="refresh">Оновити список</button>
+          <span id="statusPill" class="pill">—</span>
+        </div>
+        <ul id="convList" class="list"></ul>
+      </aside>
+      <main class="main">
+        <div id="empty" class="empty">
+          Оберіть розмову зліва або оновіть список.
+        </div>
+        <article id="detail" class="detail" hidden>
+          <header class="detail-head">
+            <h2 id="dTitle">Клієнт</h2>
+            <p id="dMeta" class="meta"></p>
+          </header>
+          <section class="block">
+            <h3>Історія</h3>
+            <div id="history" class="history"></div>
+          </section>
+          <section class="block draft">
+            <h3>Чернетка AI</h3>
+            <pre id="draft" class="draft-pre"></pre>
+            <div class="actions">
+              <button type="button" id="btnSendDraft" class="primary">Надіслати чернетку клієнту</button>
+              <button type="button" id="btnEscalate" class="danger">Ескалувати</button>
+            </div>
+          </section>
+          <section class="block">
+            <h3>Власний текст клієнту</h3>
+            <textarea id="customText" rows="4" maxlength="4096" placeholder="Текст піде в Telegram клієнту як відповідь оператора"></textarea>
+            <button type="button" id="btnSendCustom" class="secondary">Надіслати цей текст</button>
+          </section>
+          <p id="actionMsg" class="msg" hidden></p>
+        </article>
+      </main>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
