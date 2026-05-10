@@ -76,14 +76,23 @@ class ClaudeService:
         ]
 
         for _step in range(10):
-            message = await self._client.messages.create(
-                model=self._model,
-                max_tokens=1200,
-                temperature=0.2,
-                system=system,
-                tools=TOOLS,
-                messages=messages,
-            )
+            try:
+                message = await self._client.messages.create(
+                    model=self._model,
+                    max_tokens=1200,
+                    temperature=0.2,
+                    system=system,
+                    tools=TOOLS,
+                    messages=messages,
+                )
+            except Exception as exc:
+                log.error(
+                    "Anthropic messages.create failed (model=%s, error_type=%s): %s",
+                    self._model,
+                    type(exc).__name__,
+                    exc,
+                )
+                raise
 
             blocks = getattr(message, "content", []) or []
             texts = [
