@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 import asyncpg
 
@@ -18,22 +19,44 @@ def _normalize_dsn(url: str) -> str:
     return u
 
 
+def _dsn_host_port(dsn_normalized: str) -> tuple[str | None, int]:
+    parsed = urlparse(dsn_normalized)
+    return parsed.hostname, int(parsed.port or 5432)
+
+
 async def create_pool(settings: Settings) -> asyncpg.Pool:
     kwargs: dict[str, Any] = {"min_size": 1, "max_size": 10}
     use_ssl = settings.postgres_should_use_ssl()
     cfg = settings.database_ssl
+    dsn = _normalize_dsn(settings.database_url)
+    host, port = _dsn_host_port(dsn)
     log.info(
-        "Postgres connect ssl=%s (DATABASE_SSL env=%s)",
+        "Postgres connect target host=%s port=%s ssl=%s (DATABASE_SSL env=%s)",
+        host,
+        port,
         use_ssl,
         "unset→auto" if cfg is None else cfg,
     )
     if use_ssl:
         kwargs["ssl"] = True
 
-    return await asyncpg.create_pool(
-        _normalize_dsn(settings.database_url),
-        **kwargs,
-    )
+    try:
+        return await asyncpg.create_pool(dsn, **kwargs)
+    except ConnectionRefusedError:
+        hint = (
+            "Немає процесу Postgres на цьому host:port або змінна вказує не ту мережу. "
+            "Railway: у сервісі додатка Database URL → Variable Reference на Postgres → DATABASE_URL; "
+            "або використайте Postgres DATABASE_PUBLIC_URL (хост *.proxy.rlwy.net + зовнішній порт з UI, не 5432). "
+            "Спробуйте прибрати DATABASE_SSL із Variables (увімкнеться авто по хосту)."
+        )
+        log.error(
+            "Postgres connection refused (host=%s port=%s, ssl=%s). %s",
+            host,
+            port,
+            use_ssl,
+            hint,
+        )
+        raise
 
 
 def _history_from_db(value: Any) -> list[dict[str, Any]]:
