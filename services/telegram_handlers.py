@@ -34,15 +34,29 @@ async def _try_clear_inline_keyboard(update: Update) -> None:
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.effective_chat.type != ChatType.PRIVATE:
+    if not update.message:
         return
-    await update.message.reply_text(
-        (
-            "Вітаємо! Це logistics-copilot.\n\n"
-            "Опишіть питання: статус відправлення, строки, умови, адреси — ми підключимо оператора або "
-            "відповімо автоматично, коли це безпечно."
-        ),
-    )
+    chat = update.effective_chat
+    if chat.type == ChatType.PRIVATE:
+        await update.message.reply_text(
+            (
+                "Вітаємо! Це logistics-copilot.\n\n"
+                "Опишіть питання: статус відправлення, строки, умови, адреси — ми підключимо оператора або "
+                "відповімо автоматично, коли це безпечно."
+            ),
+        )
+        return
+
+    if chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
+        me = await context.bot.get_me()
+        un = me.username or ""
+        link = f"https://t.me/{un}" if un else ""
+        await update.message.reply_text(
+            (
+                "Клієнтські звернення — лише в особистому чаті з ботом.\n\n"
+                f"Відкрий: {link} → Start → напиши питання туди."
+            ),
+        )
 
 
 async def on_text_dispatch(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -60,6 +74,18 @@ async def on_text_dispatch(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return
 
     if chat.type != ChatType.PRIVATE:
+        if chat.type in (ChatType.GROUP, ChatType.SUPERGROUP):
+            me = await context.bot.get_me()
+            un = me.username or ""
+            if un:
+                await update.message.reply_text(
+                    "Тут відповіді не формую: це група. Напишіть мені в особисті → "
+                    f"https://t.me/{un}",
+                )
+            else:
+                await update.message.reply_text(
+                    "Напишіть у приватний чат із ботом (іконка бота → особисті повідомлення).",
+                )
         return
 
     await handle_customer_private_text(update, context, settings=settings, conversation_repo=conv_repo)
