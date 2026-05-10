@@ -89,6 +89,16 @@ app = FastAPI(title="AI-LOGISTICS COPILOT", lifespan=lifespan)
 app.include_router(telegram_router, prefix="/api/webhooks")
 
 
+@app.get("/")
+async def root() -> dict[str, str]:
+    return {
+        "service": "AI-LOGISTICS COPILOT",
+        "status": "ok",
+        "health": "/health",
+        "telegram_webhook": "/api/webhooks/telegram",
+    }
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
     return HealthResponse()
