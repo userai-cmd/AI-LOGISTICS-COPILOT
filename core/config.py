@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = Field(..., validation_alias="ANTHROPIC_API_KEY")
     model_name: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-sonnet-4-6",
         validation_alias="MODEL_NAME",
     )
 
